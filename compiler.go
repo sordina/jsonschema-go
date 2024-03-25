@@ -308,6 +308,25 @@ func (c *Compiler) compileMap(r *resource, stack []schemaRef, sref schemaRef, re
 	var s = res.schema
 	var err error
 
+	// MY SPECIAL SAUCE
+
+	if tags, ok := m["$tags"]; ok {
+		switch tags := tags.(type) {
+		case string:
+			s.CALLBACKS = []string{tags}
+		case []interface{}:
+			var ts = []string{}
+			for _, t := range tags {
+				ts = append(ts, fmt.Sprintf("%s", t))
+			}
+			s.CALLBACKS = ts
+		default:
+			panic(fmt.Sprintf("$tags (%T) must be a string or array of strings", tags))
+		}
+	}
+
+	// ORIGINAL SAUCE
+
 	if r == res { // root schema
 		if sch, ok := m["$schema"]; ok {
 			sch := sch.(string)

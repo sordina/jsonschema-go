@@ -14,6 +14,12 @@ import (
 	"unicode/utf8"
 )
 
+// MY SPECIAL SAUCE
+// Not threadsafe... Obviously.
+// Callback with tag, path, object
+var Callback func(string, string, map[string]interface{})
+
+// OTHER SAUCE
 // A Schema represents compiled version of json-schema.
 type Schema struct {
 	Location string // absolute location
@@ -22,6 +28,9 @@ type Schema struct {
 	meta           *Schema
 	vocab          []string
 	dynamicAnchors []*Schema
+
+	// MY SPECIAL SAUCE
+	CALLBACKS []string
 
 	// type agnostic validations
 	Format           string
@@ -193,6 +202,10 @@ func (s *Schema) validateValue(v interface{}, vloc string) (err error) {
 
 // validate validates given value v with this schema.
 func (s *Schema) validate(scope []schemaRef, vscope int, spath string, v interface{}, vloc string) (result validationResult, err error) {
+
+	// fmt.Println(spath)
+	// fmt.Println(vloc)
+
 	validationError := func(keywordPath string, format string, a ...interface{}) *ValidationError {
 		return &ValidationError{
 			KeywordLocation:         keywordLocation(scope, keywordPath),
@@ -313,6 +326,14 @@ func (s *Schema) validate(scope []schemaRef, vscope int, spath string, v interfa
 
 	switch v := v.(type) {
 	case map[string]interface{}:
+		// MY SPECIAL SAUCE
+		if Callback != nil {
+			for _, tag := range s.CALLBACKS {
+				Callback(tag, vloc, v)
+			}
+		}
+
+		// OTHER SAUCE
 		if s.MinProperties != -1 && len(v) < s.MinProperties {
 			errors = append(errors, validationError("minProperties", "minimum %d properties allowed, but found %d properties", s.MinProperties, len(v)))
 		}
