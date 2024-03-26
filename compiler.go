@@ -313,11 +313,20 @@ func (c *Compiler) compileMap(r *resource, stack []schemaRef, sref schemaRef, re
 	if tags, ok := m["$tags"]; ok {
 		switch tags := tags.(type) {
 		case string:
+			cb := Callbacks[tags]
+			if cb == nil {
+				panic(fmt.Sprintf("No callback registered for tag %s", tags))
+			}
 			s.CALLBACKS = []string{tags}
 		case []interface{}:
 			var ts = []string{}
 			for _, t := range tags {
-				ts = append(ts, fmt.Sprintf("%s", t))
+				t := fmt.Sprintf("%s", t)
+				cb := Callbacks[t]
+				if cb == nil {
+					panic(fmt.Sprintf("No callback registered for tag %s", t))
+				}
+				ts = append(ts, t)
 			}
 			s.CALLBACKS = ts
 		default:

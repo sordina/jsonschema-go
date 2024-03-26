@@ -17,7 +17,7 @@ import (
 // MY SPECIAL SAUCE
 // Not threadsafe... Obviously.
 // Callback with tag, path, object
-var Callback func(string, string, map[string]interface{})
+var Callbacks map[string]func(string, string, map[string]interface{}) = make(map[string]func(string, string, map[string]interface{}))
 
 // OTHER SAUCE
 // A Schema represents compiled version of json-schema.
@@ -327,9 +327,12 @@ func (s *Schema) validate(scope []schemaRef, vscope int, spath string, v interfa
 	switch v := v.(type) {
 	case map[string]interface{}:
 		// MY SPECIAL SAUCE
-		if Callback != nil {
+		if Callbacks != nil {
 			for _, tag := range s.CALLBACKS {
-				Callback(tag, vloc, v)
+				cb := Callbacks[tag]
+				if cb != nil {
+					cb(tag, vloc, v)
+				}
 			}
 		}
 
